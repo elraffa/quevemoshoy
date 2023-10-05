@@ -200,3 +200,4 @@ function is_paginated() {
 	}
 }
 add_action( 'wp_head', __NAMESPACE__ . '\is_paginated' );
+
