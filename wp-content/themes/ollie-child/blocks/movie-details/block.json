@@ -1,0 +1,16 @@
+{
+    "name": "acf/movie-details",
+    "title": "Ficha Tecnica Peliculas",
+    "description": "Ficha tecnica de las peliculas",
+    "style": [ "file:./movie-details.css" ],
+    "category": "formatting",
+    "icon": "media-document",
+    "keywords": ["movie-details", "quote"],
+    "acf": {
+        "mode": "preview",
+        "renderTemplate": "movie-details.php"
+    },
+    "supports": {
+        "anchor": true
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "name": "acf/platforms",
+    "title": "Platforms",
+    "description": "Show all platforms",
+    "style": [ "file:./platforms.css" ],
+    "category": "formatting",
+    "icon": "admin-comments",
+    "keywords": ["platforms", "quote"],
+    "acf": {
+        "mode": "preview",
+        "renderTemplate": "platforms.php"
+    },
+    "supports": {
+        "anchor": true
+    }
+}
