@@ -27,8 +27,14 @@ $movie_platforms = get_field('movie_platforms');
         <?php if ( $movie_platforms ) : ?>
                 <?php foreach ( $movie_platforms as $platform ) : ?>
                     <a href=<?php echo esc_url( $platform->guid ); ?> class="movie-details__platforms-item">
-                        <?php echo $platform->post_title; ?>
+                        <?php echo esc_html( $platform->post_title ); ?>
                     </a>
+                <?php 
+                // add a comma if platforms is more than one and is not the last one
+                if ( count( $movie_platforms ) > 1 && $platform !== end( $movie_platforms ) ) {
+                    echo '<span>, </span>';
+                }
+                ?>
                 <?php endforeach; ?>
         <?php else : ?>
             <span class="movie-details__platforms-list">Desconocido</span>
