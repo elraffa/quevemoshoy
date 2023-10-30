@@ -34,6 +34,8 @@ function register_custom_blocks() {
         
         // Construct the path for block's CSS file based on its name.
         $block_style_path = '/blocks/' . $block_name . '/' . $block_name . '.css';
+        $block_script_path = '/blocks/' . $block_name . '/' . $block_name . '.js';
+
 
         // Register block styles for both frontend + backend.
         wp_register_style(
@@ -42,12 +44,22 @@ function register_custom_blocks() {
             is_admin() ? array( 'wp-edit-blocks' ) : null
         );
 
+        // Register block script for both frontend + backend.
+        wp_register_script(
+            $block_name . '-script',
+            get_stylesheet_directory_uri() . $block_script_path,
+            array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-i18n' ), // Add dependencies as needed
+            true // In footer
+        );
+
         // Register the block type.
         register_block_type(
             __DIR__ . '/blocks/' . $block_name, 
             array(
                 'style' => $block_name . '-style', // Loaded on both frontend & backend
-                //'editor_style' => $block_name . '-style', // Loaded only on backend
+                'editor_style' => $block_name . '-style', // Loaded only on backend
+                'editor_script' => $block_name . '-script', // Loaded only on backend
+                'script'        => $block_name . '-script', // Loaded on both frontend & backend
             )
         );
     }
