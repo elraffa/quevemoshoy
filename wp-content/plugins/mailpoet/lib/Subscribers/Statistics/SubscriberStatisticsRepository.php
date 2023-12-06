@@ -107,6 +107,7 @@ class SubscriberStatisticsRepository extends Repository {
       return null;
     }
 
+    $revenueStatus = $this->wcHelper->getPurchaseStates();
     $currency = $this->wcHelper->getWoocommerceCurrency();
     $queryBuilder = $this->entityManager->createQueryBuilder()
       ->select('stats.orderPriceTotal')
@@ -115,6 +116,10 @@ class SubscriberStatisticsRepository extends Repository {
       ->andWhere('stats.orderCurrency = :currency')
       ->setParameter('subscriber', $subscriber)
       ->setParameter('currency', $currency)
+      ->andWhere('stats.status IN (:revenue_status)')
+      ->setParameter('subscriber', $subscriber)
+      ->setParameter('currency', $currency)
+      ->setParameter('revenue_status', $revenueStatus)
       ->groupBy('stats.orderId, stats.orderPriceTotal');
     if ($startTime) {
       $queryBuilder
@@ -122,9 +127,8 @@ class SubscriberStatisticsRepository extends Repository {
         ->setParameter('dateTime', $startTime);
     }
     $purchases =
-      $queryBuilder
-      ->getQuery()
-      ->getResult();
+      $queryBuilder->getQuery()
+        ->getResult();
     $sum = array_sum(array_column($purchases, 'orderPriceTotal'));
     return new WooCommerceRevenue(
       $currency,
