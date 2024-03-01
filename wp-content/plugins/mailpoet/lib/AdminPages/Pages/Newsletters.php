@@ -9,6 +9,7 @@ use MailPoet\AdminPages\PageRenderer;
 use MailPoet\AutomaticEmails\AutomaticEmails;
 use MailPoet\Config\Env;
 use MailPoet\Config\Menu;
+use MailPoet\Config\ServicesChecker;
 use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Listing\PageLimit;
 use MailPoet\Newsletter\NewslettersRepository;
@@ -17,6 +18,7 @@ use MailPoet\Segments\SegmentsSimpleListRepository;
 use MailPoet\Services\AuthorizedSenderDomainController;
 use MailPoet\Services\Bridge;
 use MailPoet\Settings\SettingsController;
+use MailPoet\Settings\UserFlagsController;
 use MailPoet\Util\License\Features\Subscribers as SubscribersFeature;
 use MailPoet\WooCommerce\TransactionalEmails;
 use MailPoet\WP\AutocompletePostListLoader as WPPostListLoader;
@@ -60,6 +62,11 @@ class Newsletters {
   /** @var SubscribersFeature */
   private $subscribersFeature;
 
+  /** @var ServicesChecker */
+  private $servicesChecker;
+
+  private UserFlagsController $userFlagsController;
+
   public function __construct(
     PageRenderer $pageRenderer,
     PageLimit $listingPageLimit,
@@ -72,7 +79,9 @@ class Newsletters {
     NewslettersRepository $newslettersRepository,
     Bridge $bridge,
     AuthorizedSenderDomainController $senderDomainController,
-    SubscribersFeature $subscribersFeature
+    SubscribersFeature $subscribersFeature,
+    ServicesChecker $servicesChecker,
+    UserFlagsController $userFlagsController
   ) {
     $this->pageRenderer = $pageRenderer;
     $this->listingPageLimit = $listingPageLimit;
@@ -86,6 +95,8 @@ class Newsletters {
     $this->bridge = $bridge;
     $this->senderDomainController = $senderDomainController;
     $this->subscribersFeature = $subscribersFeature;
+    $this->servicesChecker = $servicesChecker;
+    $this->userFlagsController = $userFlagsController;
   }
 
   public function render() {
@@ -124,7 +135,7 @@ class Newsletters {
 
     $data['sent_newsletters_count'] = $this->newslettersRepository->countBy(['status' => NewsletterEntity::STATUS_SENT]);
     $data['woocommerce_transactional_email_id'] = $this->settings->get(TransactionalEmails::SETTING_EMAIL_ID);
-    $data['display_detailed_stats'] = $this->subscribersFeature->hasValidPremiumKey() && !$this->subscribersFeature->check();
+    $data['display_detailed_stats'] = $this->subscribersFeature->hasValidPremiumKey() && !$this->subscribersFeature->check() && $this->servicesChecker->isPremiumPluginActive();
     $data['newsletters_templates_recently_sent_count'] = $this->newsletterTemplatesRepository->getRecentlySentCount();
 
     $data['product_categories'] = $this->wpPostListLoader->getWooCommerceCategories();
@@ -133,15 +144,29 @@ class Newsletters {
 
     $data['authorized_emails'] = [];
     $data['verified_sender_domains'] = [];
+    $data['partially_verified_sender_domains'] = [];
     $data['all_sender_domains'] = [];
+    $data['sender_restrictions'] = [];
 
     if ($this->bridge->isMailpoetSendingServiceEnabled()) {
       $data['authorized_emails'] = $this->bridge->getAuthorizedEmailAddresses();
-      $data['verified_sender_domains'] = $this->senderDomainController->getVerifiedSenderDomains();
+      $data['verified_sender_domains'] = $this->senderDomainController->getFullyVerifiedSenderDomains(true);
+      $data['partially_verified_sender_domains'] = $this->senderDomainController->getPartiallyVerifiedSenderDomains(true);
       $data['all_sender_domains'] = $this->senderDomainController->getAllSenderDomains();
+      $data['sender_restrictions'] = [
+        'lowerLimit' => AuthorizedSenderDomainController::LOWER_LIMIT,
+        'isAuthorizedDomainRequiredForNewCampaigns' => $this->senderDomainController->isAuthorizedDomainRequiredForNewCampaigns(),
+        'campaignTypes' => NewsletterEntity::CAMPAIGN_TYPES,
+      ];
     }
 
     $data['corrupt_newsletters'] = $this->getCorruptNewsletterSubjects();
+
+    $data['legacy_automatic_emails_count'] = $this->newslettersRepository->countBy([
+      'type' => [NewsletterEntity::TYPE_WELCOME, NewsletterEntity::TYPE_AUTOMATIC],
+    ]);
+
+    $data['legacy_automatic_emails_notice_dismissed'] = (bool)$this->userFlagsController->get('legacy_automatic_emails_notice_dismissed');
 
     $this->pageRenderer->displayPage('newsletters.html', $data);
   }

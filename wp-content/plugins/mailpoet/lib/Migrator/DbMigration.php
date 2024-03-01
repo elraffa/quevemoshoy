@@ -26,6 +26,9 @@ abstract class DbMigration {
 
   abstract public function run(): void;
 
+  /**
+   * @param class-string<object> $entityClass
+   */
   protected function getTableName(string $entityClass): string {
     return $this->entityManager->getClassMetadata($entityClass)->getTableName();
   }
@@ -51,6 +54,15 @@ abstract class DbMigration {
       AND table_name = ?
       AND column_name = ?
     ", [Env::$dbName, $tableName, $columnName])->fetchOne() !== false;
+  }
+
+  protected function tableExists(string $tableName): bool {
+    return $this->connection->executeQuery("
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = COALESCE(DATABASE(), ?)
+        AND table_name = ?
+      ", [Env::$dbName, $tableName])->fetchOne() !== false;
   }
 
   protected function indexExists(string $tableName, string $indexName): bool {

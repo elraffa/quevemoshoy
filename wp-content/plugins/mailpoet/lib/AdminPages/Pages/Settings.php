@@ -5,6 +5,7 @@ namespace MailPoet\AdminPages\Pages;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\AdminPages\AssetsController;
 use MailPoet\AdminPages\PageRenderer;
 use MailPoet\Config\Installer;
 use MailPoet\Config\ServicesChecker;
@@ -43,7 +44,11 @@ class Settings {
   /** @var AuthorizedSenderDomainController */
   private $senderDomainController;
 
+  /** @var AssetsController */
+  private $assetsController;
+
   public function __construct(
+    AssetsController $assetsController,
     PageRenderer $pageRenderer,
     SettingsController $settings,
     WPFunctions $wp,
@@ -53,6 +58,7 @@ class Settings {
     Bridge $bridge,
     AuthorizedSenderDomainController $senderDomainController
   ) {
+    $this->assetsController = $assetsController;
     $this->pageRenderer = $pageRenderer;
     $this->settings = $settings;
     $this->wp = $wp;
@@ -92,12 +98,18 @@ class Settings {
 
     $data['authorized_emails'] = [];
     $data['verified_sender_domains'] = [];
+    $data['partially_verified_sender_domains'] = [];
     $data['all_sender_domains'] = [];
+    $data['sender_restrictions'] = [];
 
     if ($this->bridge->isMailpoetSendingServiceEnabled() && $mpApiKeyValid) {
       $data['authorized_emails'] = $this->bridge->getAuthorizedEmailAddresses();
-      $data['verified_sender_domains'] = $this->senderDomainController->getVerifiedSenderDomains();
+      $data['verified_sender_domains'] = $this->senderDomainController->getFullyVerifiedSenderDomains(true);
+      $data['partially_verified_sender_domains'] = $this->senderDomainController->getPartiallyVerifiedSenderDomains(true);
       $data['all_sender_domains'] = $this->senderDomainController->getAllSenderDomains();
+      $data['sender_restrictions'] = [
+        'lowerLimit' => AuthorizedSenderDomainController::LOWER_LIMIT,
+      ];
     }
 
     $data = array_merge($data, Installer::getPremiumStatus());
@@ -110,6 +122,8 @@ class Settings {
       ));
       $notice->displayWPNotice();
     }
+
+    $this->assetsController->setupSettingsDependencies();
     $this->pageRenderer->displayPage('settings.html', $data);
   }
 }

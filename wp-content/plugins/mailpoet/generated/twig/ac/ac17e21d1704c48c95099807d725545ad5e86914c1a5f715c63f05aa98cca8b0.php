@@ -29,8 +29,6 @@ class __TwigTemplate_d7e5c6eabd771def3ba904afb1433c0226390ff983f51ef08486a758acf
 
         $this->blocks = [
             'content' => [$this, 'block_content'],
-            'translations' => [$this, 'block_translations'],
-            'after_javascript' => [$this, 'block_after_javascript'],
         ];
     }
 
@@ -64,90 +62,76 @@ class __TwigTemplate_d7e5c6eabd771def3ba904afb1433c0226390ff983f51ef08486a758acf
         // line 9
         echo json_encode(($context["verified_sender_domains"] ?? null));
         echo ";
-      var mailpoet_all_sender_domains = ";
+      var mailpoet_partially_verified_sender_domains = ";
         // line 10
+        echo json_encode(($context["partially_verified_sender_domains"] ?? null));
+        echo ";
+      var mailpoet_all_sender_domains = ";
+        // line 11
         echo json_encode(($context["all_sender_domains"] ?? null));
         echo ";
+      var mailpoet_sender_restrictions = ";
+        // line 12
+        echo json_encode(($context["sender_restrictions"] ?? null));
+        echo ";
       var mailpoet_members_plugin_active = ";
-        // line 11
+        // line 13
         echo json_encode((($context["is_members_plugin_active"] ?? null) == true));
         echo ";
       var mailpoet_settings = ";
-        // line 12
+        // line 14
         echo json_encode(($context["settings"] ?? null));
         echo ";
       var mailpoet_segments = ";
-        // line 13
+        // line 15
         echo json_encode(($context["segments"] ?? null));
         echo ";
       var mailpoet_pages = ";
-        // line 14
+        // line 16
         echo json_encode(($context["pages"] ?? null));
         echo ";
       var mailpoet_mss_key_valid = ";
-        // line 15
+        // line 17
         echo json_encode(($context["mss_key_valid"] ?? null));
         echo ";
       var mailpoet_premium_key_valid = ";
-        // line 16
+        // line 18
         echo json_encode(($context["premium_key_valid"] ?? null));
         echo ";
       var mailpoet_paths = ";
-        // line 17
+        // line 19
         echo json_encode(($context["paths"] ?? null));
         echo ";
       var mailpoet_built_in_captcha_supported = ";
-        // line 18
+        // line 20
         echo json_encode((($context["built_in_captcha_supported"] ?? null) == true));
         echo ";
       var mailpoet_free_plan_url = \"";
-        // line 19
+        // line 21
         echo $this->extensions['MailPoet\Twig\Functions']->addReferralId("https://www.mailpoet.com/free-plan");
         echo "\";
       var mailpoet_current_user_email = \"";
-        // line 20
-        echo \MailPoetVendor\twig_escape_filter($this->env, \MailPoetVendor\twig_get_attribute($this->env, $this->source, ($context["current_user"] ?? null), "user_email", [], "any", false, false, false, 20), "js", null, true);
+        // line 22
+        echo \MailPoetVendor\twig_escape_filter($this->env, \MailPoetVendor\twig_get_attribute($this->env, $this->source, ($context["current_user"] ?? null), "user_email", [], "any", false, false, false, 22), "js", null, true);
         echo "\";
       var mailpoet_hosts = ";
-        // line 21
+        // line 23
         echo json_encode(($context["hosts"] ?? null));
         echo ";
       var mailpoet_current_site_title = ";
-        // line 22
+        // line 24
         echo json_encode(($context["current_site_title"] ?? null));
         echo ";
     ";
-        // line 24
-        echo "    var mailpoet_beacon_articles = [
-      '57f71d49c697911f2d323486',
-      '57fb0e1d9033600277a681ca',
-      '57f49a929033602e61d4b9f4',
-      '57fb134cc697911f2d323e3b',
-    ];
-  </script>
-";
-    }
+        // line 26
+        echo "  </script>
 
-    // line 32
-    public function block_translations($context, array $blocks = [])
-    {
-        $macros = $this->macros;
-        // line 33
+  ";
+        // line 28
+        $this->loadTemplate("settings_translations.html", "settings.html", 28)->display($context);
+        // line 29
         echo "  ";
-        $this->loadTemplate("settings_translations.html", "settings.html", 33)->display($context);
-        // line 34
-        echo "  ";
-        $this->loadTemplate("premium_key_validation_strings.html", "settings.html", 34)->display($context);
-    }
-
-    // line 37
-    public function block_after_javascript($context, array $blocks = [])
-    {
-        $macros = $this->macros;
-        // line 38
-        echo $this->extensions['MailPoet\Twig\Assets']->generateJavascript("settings.js");
-        echo "
-";
+        $this->loadTemplate("premium_key_validation_strings.html", "settings.html", 29)->display($context);
     }
 
     public function getTemplateName()
@@ -162,7 +146,7 @@ class __TwigTemplate_d7e5c6eabd771def3ba904afb1433c0226390ff983f51ef08486a758acf
 
     public function getDebugInfo()
     {
-        return array (  145 => 38,  141 => 37,  136 => 34,  133 => 33,  129 => 32,  118 => 24,  114 => 22,  110 => 21,  106 => 20,  102 => 19,  98 => 18,  94 => 17,  90 => 16,  86 => 15,  82 => 14,  78 => 13,  74 => 12,  70 => 11,  66 => 10,  62 => 9,  57 => 8,  52 => 4,  48 => 3,  37 => 1,);
+        return array (  130 => 29,  128 => 28,  124 => 26,  120 => 24,  116 => 23,  112 => 22,  108 => 21,  104 => 20,  100 => 19,  96 => 18,  92 => 17,  88 => 16,  84 => 15,  80 => 14,  76 => 13,  72 => 12,  68 => 11,  64 => 10,  60 => 9,  55 => 8,  50 => 4,  46 => 3,  35 => 1,);
     }
 
     public function getSourceContext()

@@ -31,6 +31,13 @@ class AutomationRunLogStorage {
     return $this->wpdb->insert_id;
   }
 
+  public function updateAutomationRunLog(AutomationRunLog $automationRunLog): void {
+    $result = $this->wpdb->update($this->table, $automationRunLog->toArray(), ['id' => $automationRunLog->getId()]);
+    if ($result === false) {
+      throw Exceptions::databaseError($this->wpdb->last_error);
+    }
+  }
+
   public function getAutomationRunStatisticsForAutomationInTimeFrame(int $automationId, string $status, \DateTimeImmutable $after, \DateTimeImmutable $before, int $versionId = null): array {
     $logTable = esc_sql($this->table);
     $runTable = esc_sql($this->wpdb->prefix . 'mailpoet_automation_runs');
@@ -41,6 +48,7 @@ class AutomationRunLogStorage {
     if ($versionId !== null) {
       $whereCondition .= ' AND run.version_id = %d';
     }
+    /** @var literal-string $sql */
     $sql = "SELECT count(log.id) as `count`, log.step_id FROM $logTable AS log
       JOIN $runTable AS run ON log.automation_run_id = run.id
       WHERE $whereCondition
@@ -56,7 +64,9 @@ class AutomationRunLogStorage {
 
   public function getAutomationRunLog(int $id): ?AutomationRunLog {
     $table = esc_sql($this->table);
-    $query = $this->wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id);
+    /** @var literal-string $sql */
+    $sql = "SELECT * FROM $table WHERE id = %d";
+    $query = $this->wpdb->prepare($sql, $id);
 
     if (!is_string($query)) {
       throw InvalidStateException::create();
@@ -71,6 +81,18 @@ class AutomationRunLogStorage {
     return null;
   }
 
+  public function getAutomationRunLogByRunAndStepId(int $runId, string $stepId): ?AutomationRunLog {
+    $table = esc_sql($this->table);
+    /** @var literal-string $sql */
+    $sql = "SELECT * FROM $table WHERE automation_run_id = %d AND step_id = %s";
+    $query = $this->wpdb->prepare($sql, $runId, $stepId);
+    if (!is_string($query)) {
+      throw InvalidStateException::create();
+    }
+    $result = $this->wpdb->get_row($query, ARRAY_A);
+    return $result ? AutomationRunLog::fromArray((array)$result) : null;
+  }
+
   /**
    * @param int $automationRunId
    * @return AutomationRunLog[]
@@ -78,12 +100,14 @@ class AutomationRunLogStorage {
    */
   public function getLogsForAutomationRun(int $automationRunId): array {
     $table = esc_sql($this->table);
-    $query = $this->wpdb->prepare("
+    /** @var literal-string $sql */
+    $sql = "
       SELECT *
       FROM $table
       WHERE automation_run_id = %d
       ORDER BY id ASC
-    ", $automationRunId);
+    ";
+    $query = $this->wpdb->prepare($sql, $automationRunId);
 
     if (!is_string($query)) {
       throw InvalidStateException::create();
@@ -97,6 +121,7 @@ class AutomationRunLogStorage {
 
     if ($results) {
       return array_map(function($data) {
+        /** @var array $data - for PHPStan because it conflicts with expected callable(mixed): mixed)|null */
         return AutomationRunLog::fromArray($data);
       }, $results);
     }

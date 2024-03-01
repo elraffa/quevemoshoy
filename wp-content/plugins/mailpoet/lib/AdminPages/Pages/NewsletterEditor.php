@@ -5,9 +5,9 @@ namespace MailPoet\AdminPages\Pages;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\AdminPages\AssetsController;
 use MailPoet\AdminPages\PageRenderer;
 use MailPoet\Entities\SubscriberEntity;
-use MailPoet\Form\AssetsController;
 use MailPoet\Form\Util\CustomFonts;
 use MailPoet\Newsletter\Renderer\Blocks\Coupon;
 use MailPoet\Newsletter\Shortcodes\ShortcodesHelper;
@@ -95,6 +95,7 @@ class NewsletterEditor {
   }
 
   public function render() {
+    $this->setupImageSize();
     $this->assetsController->setupNewsletterEditorDependencies();
     $newsletterId = (isset($_GET['id']) ? (int)$_GET['id'] : 0);
     $woocommerceTemplateId = (int)$this->settings->get(TransactionalEmails::SETTING_EMAIL_ID, null);
@@ -132,7 +133,6 @@ class NewsletterEditor {
             'discount_types' => array_map(function($label, $value): array {
               return ['label' => $label, 'value' => $value];
             }, $discountTypes, array_keys($discountTypes)),
-            'available_coupons' => $this->woocommerceHelper->getCouponList(),
             'code_placeholder' => Coupon::CODE_PLACEHOLDER,
             'price_decimal_separator' => $this->woocommerceHelper->wcGetPriceDecimalSeparator(),
           ],
@@ -191,5 +191,16 @@ class NewsletterEditor {
       'unsubscribe_token' => $subscriber->getUnsubscribeToken(),
       'link_token' => $subscriber->getLinkToken(),
     ];
+  }
+
+  private function setupImageSize(): void {
+    $this->wp->addFilter(
+      'image_size_names_choose',
+      function ($sizes): array {
+        return array_merge($sizes, [
+          'mailpoet_newsletter_max' => __('MailPoet Newsletter', 'mailpoet'),
+        ]);
+      }
+    );
   }
 }

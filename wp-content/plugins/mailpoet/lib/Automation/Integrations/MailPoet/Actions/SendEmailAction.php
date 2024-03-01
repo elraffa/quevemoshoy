@@ -6,11 +6,12 @@ if (!defined('ABSPATH')) exit;
 
 
 use MailPoet\AutomaticEmails\WooCommerce\Events\AbandonedCart;
+use MailPoet\Automation\Engine\Control\StepRunController;
 use MailPoet\Automation\Engine\Data\Automation;
-use MailPoet\Automation\Engine\Data\NextStep;
 use MailPoet\Automation\Engine\Data\Step;
 use MailPoet\Automation\Engine\Data\StepRunArgs;
 use MailPoet\Automation\Engine\Data\StepValidationArgs;
+use MailPoet\Automation\Engine\Exceptions\NotFoundException;
 use MailPoet\Automation\Engine\Integration\Action;
 use MailPoet\Automation\Engine\Integration\ValidationException;
 use MailPoet\Automation\Integrations\MailPoet\Payloads\SegmentPayload;
@@ -34,6 +35,13 @@ use Throwable;
 
 class SendEmailAction implements Action {
   const KEY = 'mailpoet:send-email';
+
+  private const TRANSACTIONAL_TRIGGERS = [
+    'woocommerce:order-status-changed',
+    'woocommerce:order-created',
+    'woocommerce:order-completed',
+    'woocommerce:order-cancelled',
+  ];
 
   /** @var SettingsController */
   private $settings;
@@ -79,6 +87,7 @@ class SendEmailAction implements Action {
   }
 
   public function getName(): string {
+    // translators: automation action title
     return __('Send email', 'mailpoet');
   }
 
@@ -111,7 +120,6 @@ class SendEmailAction implements Action {
 
   public function getSubjectKeys(): array {
     return [
-      'mailpoet:segment',
       'mailpoet:subscriber',
     ];
   }
@@ -134,33 +142,18 @@ class SendEmailAction implements Action {
     }
   }
 
-  public function run(StepRunArgs $args): void {
+  public function run(StepRunArgs $args, StepRunController $controller): void {
     $newsletter = $this->getEmailForStep($args->getStep());
-    $segmentId = $args->getSinglePayloadByClass(SegmentPayload::class)->getId();
-    $subscriberId = $args->getSinglePayloadByClass(SubscriberPayload::class)->getId();
 
-    $subscriberSegment = $this->subscriberSegmentRepository->findOneBy([
-      'subscriber' => $subscriberId,
-      'segment' => $segmentId,
-      'status' => SubscriberEntity::STATUS_SUBSCRIBED,
-    ]);
-
-    if ($newsletter->getType() !== NewsletterEntity::TYPE_AUTOMATION_TRANSACTIONAL && !$subscriberSegment) {
-      throw InvalidStateException::create()->withMessage(sprintf("Subscriber ID '%s' is not subscribed to segment ID '%s'.", $subscriberId, $segmentId));
-    }
-
-    $subscriber = $subscriberSegment ? $subscriberSegment->getSubscriber() : $this->subscribersRepository->findOneById($subscriberId);
-    if (!$subscriber) {
-      throw InvalidStateException::create();
-    }
+    $subscriber = $this->getSubscriber($args);
 
     $subscriberStatus = $subscriber->getStatus();
     if ($newsletter->getType() !== NewsletterEntity::TYPE_AUTOMATION_TRANSACTIONAL && $subscriberStatus !== SubscriberEntity::STATUS_SUBSCRIBED) {
-      throw InvalidStateException::create()->withMessage(sprintf("Cannot schedule a newsletter for subscriber ID '%s' because their status is '%s'.", $subscriberId, $subscriberStatus));
+      throw InvalidStateException::create()->withMessage(sprintf("Cannot schedule a newsletter for subscriber ID '%s' because their status is '%s'.", $subscriber->getId(), $subscriberStatus));
     }
 
     if ($subscriberStatus === SubscriberEntity::STATUS_BOUNCED) {
-      throw InvalidStateException::create()->withMessage(sprintf("Cannot schedule an email for subscriber ID '%s' because their status is '%s'.", $subscriberId, $subscriberStatus));
+      throw InvalidStateException::create()->withMessage(sprintf("Cannot schedule an email for subscriber ID '%s' because their status is '%s'.", $subscriber->getId(), $subscriberStatus));
     }
 
     $meta = $this->getNewsletterMeta($args);
@@ -178,6 +171,42 @@ class SendEmailAction implements Action {
 
     $payload = $args->getSinglePayloadByClass(AbandonedCartPayload::class);
     return [AbandonedCart::TASK_META_NAME => $payload->getProductIds()];
+  }
+
+  private function getSubscriber(StepRunArgs $args): SubscriberEntity {
+    $subscriberId = $args->getSinglePayloadByClass(SubscriberPayload::class)->getId();
+    try {
+      $segmentId = $args->getSinglePayloadByClass(SegmentPayload::class)->getId();
+    } catch (NotFoundException $e) {
+      $segmentId = null;
+    }
+
+    // Without segment, fetch subscriber by ID (needed e.g. for "mailpoet:custom-trigger").
+    // Transactional emails don't need to be checked against segment, no matter if it's set.
+    if (!$segmentId || $this->isTransactional($args->getStep(), $args->getAutomation())) {
+      $subscriber = $this->subscribersRepository->findOneById($subscriberId);
+      if (!$subscriber) {
+        throw InvalidStateException::create();
+      }
+      return $subscriber;
+    }
+
+    // With segment, fetch subscriber segment and check if they are subscribed.
+    $subscriberSegment = $this->subscriberSegmentRepository->findOneBy([
+      'subscriber' => $subscriberId,
+      'segment' => $segmentId,
+      'status' => SubscriberEntity::STATUS_SUBSCRIBED,
+    ]);
+
+    if (!$subscriberSegment) {
+      throw InvalidStateException::create()->withMessage(sprintf("Subscriber ID '%s' is not subscribed to segment ID '%s'.", $subscriberId, $segmentId));
+    }
+
+    $subscriber = $subscriberSegment->getSubscriber();
+    if (!$subscriber) {
+      throw InvalidStateException::create();
+    }
+    return $subscriber;
   }
 
   public function saveEmailSettings(Step $step, Automation $automation): void {
@@ -247,7 +276,7 @@ class SendEmailAction implements Action {
     $transactionalTriggers = array_filter(
       $triggers,
       function(Step $step): bool {
-        return in_array($step->getKey(), ['woocommerce:order-status-changed'], true);
+        return in_array($step->getKey(), self::TRANSACTIONAL_TRIGGERS, true);
       }
     );
 
@@ -256,13 +285,7 @@ class SendEmailAction implements Action {
     }
 
     foreach ($transactionalTriggers as $trigger) {
-      $nextSteps = array_map(
-        function(NextStep $nextStep): string {
-          return $nextStep->getId();
-        },
-        $trigger->getNextSteps()
-      );
-      if (!in_array($step->getId(), $nextSteps, true)) {
+      if (!in_array($step->getId(), $trigger->getNextStepIds(), true)) {
         return false;
       }
     }
@@ -273,7 +296,7 @@ class SendEmailAction implements Action {
     return (bool)array_filter(
       $automation->getTriggers(),
       function(Step $step): bool {
-        return in_array($step->getKey(), ['woocommerce:order-status-changed', 'woocommerce:abandoned-cart'], true);
+        return strpos($step->getKey(), 'woocommerce:') === 0;
       }
     );
   }

@@ -12,6 +12,8 @@ use MailPoet\Entities\ScheduledTaskEntity;
 use MailPoet\Entities\SegmentEntity;
 use MailPoet\Entities\SendingQueueEntity;
 use MailPoet\Entities\SubscriberEntity;
+use MailPoet\Logging\LoggerFactory;
+use MailPoet\Segments\DynamicSegments\FilterFactory;
 use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Carbon\Carbon;
 use MailPoetVendor\Doctrine\ORM\EntityManager;
@@ -26,31 +28,52 @@ class SendingQueuesRepository extends Repository {
   /** @var WPFunctions */
   private $wp;
 
+  /** @var FilterFactory */
+  private $filterFactory;
+
+  /** @var LoggerFactory */
+  private $loggerFactory;
+
   public function __construct(
     EntityManager $entityManager,
     WPFunctions $wp,
-    ScheduledTaskSubscribersRepository $scheduledTaskSubscribersRepository
+    ScheduledTaskSubscribersRepository $scheduledTaskSubscribersRepository,
+    FilterFactory $filterFactory,
+    LoggerFactory $loggerFactory
   ) {
     parent::__construct($entityManager);
     $this->scheduledTaskSubscribersRepository = $scheduledTaskSubscribersRepository;
     $this->wp = $wp;
+    $this->filterFactory = $filterFactory;
+    $this->loggerFactory = $loggerFactory;
   }
 
   protected function getEntityClassName() {
     return SendingQueueEntity::class;
   }
 
-  public function findOneByNewsletterAndTaskStatus(NewsletterEntity $newsletter, string $status): ?SendingQueueEntity {
-    return $this->entityManager->createQueryBuilder()
+  /**
+   * @param NewsletterEntity $newsletter
+   * @param string|null $status
+   * @return SendingQueueEntity|null
+   * @throws \MailPoetVendor\Doctrine\ORM\NonUniqueResultException
+   */
+  public function findOneByNewsletterAndTaskStatus(NewsletterEntity $newsletter, $status): ?SendingQueueEntity {
+    $queryBuilder = $this->entityManager->createQueryBuilder()
       ->select('s')
       ->from(SendingQueueEntity::class, 's')
       ->join('s.task', 't')
-      ->where('t.status = :status')
       ->andWhere('s.newsletter = :newsletter')
-      ->setParameter('status', $status)
-      ->setParameter('newsletter', $newsletter)
-      ->getQuery()
-      ->getOneOrNullResult();
+      ->setParameter('newsletter', $newsletter);
+
+    if (is_null($status)) {
+      $queryBuilder->andWhere('t.status IS NULL');
+    } else {
+      $queryBuilder->andWhere('t.status = :status')
+        ->setParameter('status', $status);
+    }
+
+    return $queryBuilder->getQuery()->getOneOrNullResult();
   }
 
   public function countAllByNewsletterAndTaskStatus(NewsletterEntity $newsletter, string $status): int {
@@ -129,7 +152,7 @@ class SendingQueuesRepository extends Repository {
     if (!$task instanceof ScheduledTaskEntity) return;
 
     if ($queue->getCountProcessed() === $queue->getCountTotal()) {
-      $processedAt = Carbon::createFromTimestamp($this->wp->currentTime('mysql'));
+      $processedAt = Carbon::createFromTimestamp($this->wp->currentTime('timestamp'));
       $task->setProcessedAt($processedAt);
       $task->setStatus(ScheduledTaskEntity::STATUS_COMPLETED);
       // Update also status of newsletter if necessary
@@ -158,6 +181,11 @@ class SendingQueuesRepository extends Repository {
       ->setParameter('task', $scheduledTask)
       ->getQuery()
       ->execute();
+
+    // delete was done via DQL, make sure the entities are also detached from the entity manager
+    $this->detachAll(function (SendingQueueEntity $entity) use ($scheduledTask) {
+      return $entity->getTask() === $scheduledTask;
+    });
   }
 
   public function saveCampaignId(SendingQueueEntity $queue, string $campaignId): void {
@@ -170,22 +198,63 @@ class SendingQueuesRepository extends Repository {
     $this->flush();
   }
 
-  public function saveFilterSegmentMeta(SendingQueueEntity $queue, SegmentEntity $filterSegment): void {
+  public function saveFilterSegmentMeta(SendingQueueEntity $queue, SegmentEntity $filterSegmentEntity): void {
     $meta = $queue->getMeta() ?? [];
     $meta['filterSegment'] = [
-      'id' => $filterSegment->getId(),
-      'name' => $filterSegment->getName(),
-      'updatedAt' => $filterSegment->getUpdatedAt(),
-      'filters' => array_map(function(DynamicSegmentFilterEntity $filter) {
-        $data = $filter->getFilterData();
-        return [
+      'id' => $filterSegmentEntity->getId(),
+      'name' => $filterSegmentEntity->getName(),
+      'updatedAt' => $filterSegmentEntity->getUpdatedAt(),
+      'filters' => array_map(function(DynamicSegmentFilterEntity $filterEntity) {
+        $filter = $this->filterFactory->getFilterForFilterEntity($filterEntity);
+        $data = $filterEntity->getFilterData();
+        $filterData = [
           'filterType' => $data->getFilterType(),
           'action' => $data->getAction(),
-          'data' => $filter->getFilterData()->getData(),
+          'data' => $filterEntity->getFilterData()->getData(),
+          'lookupData' => [],
         ];
-      }, $filterSegment->getDynamicFilters()->toArray()),
+        try {
+          $filterData['lookupData'] = $filter->getLookupData($data);
+        } catch (\Throwable $e) {
+          $this->loggerFactory->getLogger(LoggerFactory::TOPIC_SEGMENTS)->error("Failed to save lookup data for filter {$filterEntity->getId()}: {$e->getMessage()}");
+        }
+        return $filterData;
+      }, $filterSegmentEntity->getDynamicFilters()->toArray()),
     ];
     $queue->setMeta($meta);
     $this->flush();
+  }
+
+  public function updateCounts(SendingQueueEntity $queue, ?int $count = null): void {
+    if ($count) {
+      // increment/decrement counts based on known subscriber count, don't exceed the bounds
+      $queue->setCountProcessed(min($queue->getCountProcessed() + $count, $queue->getCountTotal()));
+      $queue->setCountToProcess(max($queue->getCountToProcess() - $count, 0));
+    } else {
+      // query DB to update counts, slower but more accurate, to be used if count isn't known
+      $task = $queue->getTask();
+      $processed = $task ? $this->scheduledTaskSubscribersRepository->countProcessed($task) : 0;
+      $unprocessed = $task ? $this->scheduledTaskSubscribersRepository->countUnprocessed($task) : 0;
+      $queue->setCountProcessed($processed);
+      $queue->setCountToProcess($unprocessed);
+      $queue->setCountTotal($processed + $unprocessed);
+    }
+    $this->entityManager->flush();
+  }
+
+  /** @param int[] $ids */
+  public function deleteByNewsletterIds(array $ids): void {
+    $this->entityManager->createQueryBuilder()
+      ->delete(SendingQueueEntity::class, 'q')
+      ->where('q.newsletter IN (:ids)')
+      ->setParameter('ids', $ids)
+      ->getQuery()
+      ->execute();
+
+    // delete was done via DQL, make sure the entities are also detached from the entity manager
+    $this->detachAll(function (SendingQueueEntity $entity) use ($ids) {
+      $newsletter = $entity->getNewsletter();
+      return $newsletter && in_array($newsletter->getId(), $ids, true);
+    });
   }
 }

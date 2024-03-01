@@ -18,6 +18,7 @@ use MailPoet\Entities\SendingQueueEntity;
 use MailPoet\InvalidStateException;
 use MailPoet\Listing;
 use MailPoet\Newsletter\Listing\NewsletterListingRepository;
+use MailPoet\Newsletter\NewsletterDeleteController;
 use MailPoet\Newsletter\NewsletterSaveController;
 use MailPoet\Newsletter\NewslettersRepository;
 use MailPoet\Newsletter\NewsletterValidator;
@@ -26,10 +27,10 @@ use MailPoet\Newsletter\Preview\SendPreviewException;
 use MailPoet\Newsletter\Scheduler\PostNotificationScheduler;
 use MailPoet\Newsletter\Scheduler\Scheduler;
 use MailPoet\Newsletter\Url as NewsletterUrl;
+use MailPoet\Services\AuthorizedEmailsController;
 use MailPoet\Settings\SettingsController;
 use MailPoet\UnexpectedValueException;
 use MailPoet\Util\License\Features\Subscribers as SubscribersFeature;
-use MailPoet\Util\Security;
 use MailPoet\WP\Emoji;
 use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Carbon\Carbon;
@@ -76,6 +77,8 @@ class Newsletters extends APIEndpoint {
   /** @var NewsletterSaveController */
   private $newsletterSaveController;
 
+  private NewsletterDeleteController $newsletterDeleteController;
+
   /** @var NewsletterUrl */
   private $newsletterUrl;
 
@@ -84,6 +87,9 @@ class Newsletters extends APIEndpoint {
 
   /** @var Scheduler */
   private $scheduler;
+
+  /** @var AuthorizedEmailsController */
+  private $authorizedEmailsController;
 
   public function __construct(
     Listing\Handler $listingHandler,
@@ -98,9 +104,11 @@ class Newsletters extends APIEndpoint {
     Emoji $emoji,
     SendPreviewController $sendPreviewController,
     NewsletterSaveController $newsletterSaveController,
+    NewsletterDeleteController $newsletterDeleteController,
     NewsletterUrl $newsletterUrl,
     Scheduler $scheduler,
-    NewsletterValidator $newsletterValidator
+    NewsletterValidator $newsletterValidator,
+    AuthorizedEmailsController $authorizedEmailsController
   ) {
     $this->listingHandler = $listingHandler;
     $this->wp = $wp;
@@ -114,9 +122,11 @@ class Newsletters extends APIEndpoint {
     $this->emoji = $emoji;
     $this->sendPreviewController = $sendPreviewController;
     $this->newsletterSaveController = $newsletterSaveController;
+    $this->newsletterDeleteController = $newsletterDeleteController;
     $this->newsletterUrl = $newsletterUrl;
     $this->scheduler = $scheduler;
     $this->newsletterValidator = $newsletterValidator;
+    $this->authorizedEmailsController = $authorizedEmailsController;
   }
 
   public function get($data = []) {
@@ -187,6 +197,12 @@ class Newsletters extends APIEndpoint {
       return $this->errorResponse([
         APIError::NOT_FOUND => __('This email does not exist.', 'mailpoet'),
       ]);
+    }
+
+    if ($status === NewsletterEntity::STATUS_ACTIVE && !$this->authorizedEmailsController->isSenderAddressValid($newsletter)) {
+          return $this->errorResponse([
+            APIError::FORBIDDEN => __('The sender address is not an authorized sender domain.', 'mailpoet'),
+          ], [], Response::STATUS_FORBIDDEN);
     }
 
     if ($status === NewsletterEntity::STATUS_ACTIVE) {
@@ -269,7 +285,7 @@ class Newsletters extends APIEndpoint {
     $newsletter = $this->getNewsletter($data);
     if ($newsletter instanceof NewsletterEntity) {
       $this->wp->doAction('mailpoet_api_newsletters_delete_before', [$newsletter->getId()]);
-      $this->newslettersRepository->bulkDelete([$newsletter->getId()]);
+      $this->newsletterDeleteController->bulkDelete([(int)$newsletter->getId()]);
       $this->wp->doAction('mailpoet_api_newsletters_delete_after', [$newsletter->getId()]);
       return $this->successResponse(null, ['count' => 1]);
     } else {
@@ -350,7 +366,6 @@ class Newsletters extends APIEndpoint {
     $filters = $this->newsletterListingRepository->getFilters($definition);
     $groups = $this->newsletterListingRepository->getGroups($definition);
 
-    $this->fixMissingHash($items); // Fix for MAILPOET-3275. Remove after May 2021
     $data = [];
     foreach ($this->newslettersResponseBuilder->buildForListing($items) as $newsletterData) {
       $data[] = $this->wp->applyFilters('mailpoet_api_newsletters_listing_item', $newsletterData);
@@ -376,7 +391,7 @@ class Newsletters extends APIEndpoint {
       $this->newslettersRepository->bulkRestore($ids);
     } elseif ($data['action'] === 'delete') {
       $this->wp->doAction('mailpoet_api_newsletters_delete_before', $ids);
-      $this->newslettersRepository->bulkDelete($ids);
+      $this->newsletterDeleteController->bulkDelete($ids);
       $this->wp->doAction('mailpoet_api_newsletters_delete_after', $ids);
     } else {
       throw UnexpectedValueException::create()
@@ -403,24 +418,8 @@ class Newsletters extends APIEndpoint {
   }
 
   private function getViewInBrowserUrl(NewsletterEntity $newsletter): string {
-    $this->fixMissingHash([$newsletter]); // Fix for MAILPOET-3275. Remove after May 2021
     $url = $this->newsletterUrl->getViewInBrowserUrl($newsletter);
     // strip protocol to avoid mix content error
     return preg_replace('/^https?:/i', '', $url);
-  }
-
-  /**
-   * Some Newsletters were created without a hash due to a bug MAILPOET-3275
-   * We can remove this fix after May 2021 since by then most users should have their data fixed
-   * @param NewsletterEntity[] $newsletters
-   */
-  private function fixMissingHash(array $newsletters) {
-    foreach ($newsletters as $newsletter) {
-      if (!$newsletter instanceof NewsletterEntity || $newsletter->getHash() !== null) {
-        continue;
-      }
-      $newsletter->setHash(Security::generateHash());
-      $this->newslettersRepository->flush();
-    }
   }
 }

@@ -359,9 +359,19 @@ class OrderFieldsFactory {
       }
 
       $product = $item->get_product();
-      if ($product instanceof WC_Product) {
-        $products[] = $product;
+      if (!$product instanceof WC_Product) {
+        continue;
       }
+      if (!$product->is_type( 'variation' )) {
+        $products[] = $product;
+        continue;
+      }
+
+      $parentProduct = $this->wooCommerce->wcGetProduct($product->get_parent_id());
+      if (!$parentProduct instanceof WC_Product) {
+        continue;
+      }
+      $products[] = $parentProduct;
     }
     return array_unique($products);
   }
@@ -380,6 +390,7 @@ class OrderFieldsFactory {
     );
 
     return array_map(function ($product) {
+      /** @var array{ID:int, post_title:string} $product */
       $id = $product['ID'];
       $title = $product['post_title'];
       return ['id' => (int)$id, 'name' => "$title (#$id)"];

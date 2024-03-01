@@ -33,16 +33,21 @@ class StepRunArgs {
   /** @var array<string, string> */
   private $fieldToSubjectMap = [];
 
+  /** @var int */
+  private $runNumber;
+
   /** @param SubjectEntry<Subject<Payload>>[] $subjectsEntries */
   public function __construct(
     Automation $automation,
     AutomationRun $automationRun,
     Step $step,
-    array $subjectsEntries
+    array $subjectsEntries,
+    int $runNumber
   ) {
     $this->automation = $automation;
     $this->step = $step;
     $this->automationRun = $automationRun;
+    $this->runNumber = $runNumber;
 
     foreach ($subjectsEntries as $entry) {
       $subject = $entry->getSubject();
@@ -111,14 +116,11 @@ class StepRunArgs {
   public function getSinglePayloadByClass(string $class): Payload {
     $payloads = [];
     foreach ($this->subjectEntries as $entries) {
-      if (count($entries) > 1) {
-        throw Exceptions::multiplePayloadsFound($class, $this->automationRun->getId());
-      }
-
-      $entry = $entries[0];
-      $payload = $entry->getPayload();
-      if (get_class($payload) === $class) {
-        $payloads[] = $payload;
+      foreach ($entries as $entry) {
+        $payload = $entry->getPayload();
+        if (get_class($payload) === $class) {
+          $payloads[] = $payload;
+        }
       }
     }
 
@@ -152,5 +154,13 @@ class StepRunArgs {
       throw Exceptions::fieldLoadFailed($field->getKey(), $field->getArgs());
     }
     return $value;
+  }
+
+  public function getRunNumber(): int {
+    return $this->runNumber;
+  }
+
+  public function isFirstRun(): bool {
+    return $this->runNumber === 1;
   }
 }

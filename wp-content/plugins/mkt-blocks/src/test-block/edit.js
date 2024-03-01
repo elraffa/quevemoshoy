@@ -1,38 +1,35 @@
-/**
- * Retrieves the translation of text.
- *
- * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-i18n/
- */
 import { __ } from '@wordpress/i18n';
-
-/**
- * React hook that is used to mark the block wrapper element.
- * It provides all the necessary props like the class name.
- *
- * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
- */
-import { useBlockProps } from '@wordpress/block-editor';
-
-/**
- * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
- * Those files can contain any CSS code that gets applied to the editor.
- *
- * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
- */
+import { useBlockProps, RichText, BlockControls } from '@wordpress/block-editor';
+import { ToolbarGroup, ToolbarButton } from '@wordpress/components';
 import './editor.scss';
 
-/**
- * The edit function describes the structure of your block in the context of the
- * editor. This represents what the editor will render when the block is used.
- *
- * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
- *
- * @return {Element} Element to render.
- */
-export default function Edit() {
+export default function Edit({attributes, setAttributes}) {
+	const {text} = attributes;
 	return (
-		<p { ...useBlockProps() }>
-			{ __( 'Mkt Blocks – hello from the editor!', 'mkt-blocks' ) }
-		</p>
+		<>
+			<BlockControls controls={[{
+				icon: "admin-generic",
+				title: __("My Block Controls", "mkt-blocks"),
+				isActive: true,
+				onClick: () => alert("You clicked me!")
+			},
+			{
+				icon: "admin-collapse",
+				title: __("My Block Controls", "mkt-blocks"),
+				onClick: () => alert("You clicked me 2!")
+			}
+			]}>
+			<ToolbarGroup>
+				<ToolbarButton title="Align Left" icon="editor-alignleft" onClick={() => alert("Align Left")} />
+			</ToolbarGroup>
+			</BlockControls>
+			<RichText {...useBlockProps() }
+				onChange={ (value ) => setAttributes({ text: value })}
+				value={text}
+				placeholder={__("Your Text", "mkt-blocks")}
+				tagName="h4"
+				allowedFormats={[]}
+			/>
+		</>
 	);
 }

@@ -52,10 +52,9 @@ class WooCommercePastOrders extends SimpleWorker {
     add_filter('posts_where', function ($where = '') use ($lastId) {
       global $wpdb;
       return $where . " AND {$wpdb->prefix}posts.ID > " . $lastId;
-    }, 10, 2);
+    }, 10, 1);
 
     $orderIds = $this->woocommerceHelper->wcGetOrders([
-      'status' => 'completed',
       'date_completed' => '>=' . (($createdAt = $oldestClick->getCreatedAt()) ? $createdAt->format('Y-m-d H:i:s') : null),
       'orderby' => 'ID',
       'order' => 'ASC',

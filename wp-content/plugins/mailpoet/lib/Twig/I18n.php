@@ -51,16 +51,14 @@ class I18n extends AbstractExtension {
 
   public function localize() {
     $args = func_get_args();
+    /** @var array $translations */
     $translations = array_shift($args);
     $output = [];
-
-    $output[] = '<script type="text/javascript">';
     foreach ($translations as $key => $translation) {
       $output[] =
         'MailPoet.I18n.add("' . $key . '", "' . str_replace(['"', "\n", "\r"], ['\"', " ", ""], $translation ?? '') . '");';
     }
-    $output[] = '</script>';
-    return join("\n", $output);
+    WPFunctions::get()->wpAddInlineScript('mailpoet_mailpoet', join("\n", $output));
   }
 
   public function translate() {
@@ -88,6 +86,7 @@ class I18n extends AbstractExtension {
 
   public function date() {
     $args = func_get_args();
+    /** @var int|null $date */
     $date = (isset($args[0])) ? $args[0] : null;
     $dateFormat = (isset($args[1])) ? $args[1] : WPFunctions::get()->getOption('date_format');
 

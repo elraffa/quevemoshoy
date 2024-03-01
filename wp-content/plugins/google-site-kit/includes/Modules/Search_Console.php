@@ -30,7 +30,6 @@ use Google\Site_Kit\Core\Permissions\Permissions;
 use Google\Site_Kit\Core\REST_API\Data_Request;
 use Google\Site_Kit\Core\REST_API\Exception\Invalid_Datapoint_Exception;
 use Google\Site_Kit\Core\Util\Date;
-use Google\Site_Kit\Core\Util\Feature_Flags;
 use Google\Site_Kit\Core\Util\Google_URL_Matcher_Trait;
 use Google\Site_Kit\Core\Util\Google_URL_Normalizer;
 use Google\Site_Kit\Core\Util\Sort;
@@ -103,15 +102,16 @@ final class Search_Console extends Module
 		);
 
 		// Ensure that the data available state is reset when the property changes.
-		add_action(
-			'update_option_googlesitekit_search-console_settings',
+		$this->get_settings()->on_change(
 			function( $old_value, $new_value ) {
-				if ( $old_value['propertyID'] !== $new_value['propertyID'] ) {
+				if (
+					is_array( $old_value ) &&
+					is_array( $new_value ) &&
+					isset( array_diff_assoc( $new_value, $old_value )['propertyID'] )
+				) {
 					$this->reset_data_available();
 				}
-			},
-			10,
-			2
+			}
 		);
 
 		// Ensure that a Search Console property must be set at all times.
@@ -179,7 +179,7 @@ final class Search_Console extends Module
 			'GET:matched-sites'   => array( 'service' => 'searchconsole' ),
 			'GET:searchanalytics' => array(
 				'service'   => 'searchconsole',
-				'shareable' => Feature_Flags::enabled( 'dashboardSharing' ),
+				'shareable' => true,
 			),
 			'POST:site'           => array( 'service' => 'searchconsole' ),
 			'GET:sites'           => array( 'service' => 'searchconsole' ),

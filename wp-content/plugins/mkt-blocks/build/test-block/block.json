@@ -5,11 +5,23 @@
   "version": "0.1.0",
   "title": "Test Block",
   "category": "widgets",
-  "icon": "smiley",
   "description": "Example Test Block scaffolded with Create Block tool.",
   "example": {},
   "supports": {
     "html": false
+  },
+  "attributes": {
+    "text": {
+      "type": "string",
+      "source": "html",
+      "selector": "h4"
+    },
+    "backgroundColor": {
+      "type": "string"
+    },
+    "textColor": {
+      "type": "string"
+    }
   },
   "textdomain": "mkt-blocks",
   "editorScript": "file:./index.js",

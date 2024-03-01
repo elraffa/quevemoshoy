@@ -20,6 +20,7 @@
 		"postcss-preset-env": "^9.4.0"
 	},
 	"dependencies": {
+		"@wordpress/components": "^27.0.0",
 		"swiper": "^11.0.6"
 	}
 }
