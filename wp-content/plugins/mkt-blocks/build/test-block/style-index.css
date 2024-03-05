@@ -7,10 +7,14 @@
  *
  * Replace them with your own styles or remove the file completely.
  */
-.wp-block-wpe-mkt-blocks {
-  background-color: #21759b;
-  color: #fff;
-  padding: 2px;
+.wp-block-mkt-blocks-test-block.test-block--align-left {
+  text-align: left;
+}
+.wp-block-mkt-blocks-test-block.test-block--align-center {
+  text-align: center;
+}
+.wp-block-mkt-blocks-test-block.test-block--align-right {
+  text-align: right;
 }
 
 /*# sourceMappingURL=style-index.css.map*/

@@ -30,6 +30,18 @@
 	margin-top: var(--wp--preset--spacing--large);
 }
 
+.wp-block-comments .wp-block-group:empty {
+	display: none;
+}
+
+.wp-block-comments .wp-block-group:empty + .comment-respond {
+	margin-top: 0;
+}
+
+.wp-block-comments-pagination-numbers > * {
+	margin: 0 4px;
+}
+
 /* Comment Author Avatar
 --------------------------------------------- */
 

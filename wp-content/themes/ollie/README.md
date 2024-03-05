@@ -25,13 +25,13 @@ My goal with [OllieWP.com](https://olliewp.com) and this theme is to help educat
 
 ## Getting Started with Ollie
 
-- Check out a full live demo of the Ollie theme. [View Ollie Demo](https://demo.olliewp.com)
-- Download the Ollie theme zip to install on your WordPress site. [Download Ollie Theme](https://github.com/OllieWP/ollie/releases/latest/download/ollie.zip)
-- Download a zip of the Ollie demo site that can be imported into LocalWP. [Download Ollie LocalWP Blueprint](https://github.com/OllieWP/ollie/releases/latest/download/ollie-local-blueprint.zip)
+| Links  | Description |
+| ------------- | ------------- |
+| [View Ollie Demo](https://demo.olliewp.com)  | Check out a full live demo of the Ollie theme.  |
+| [Download Ollie Theme Zip](https://github.com/OllieWP/ollie/releases/latest/download/ollie.zip)  | Download the latest Ollie theme zip to install on your WordPress site.  |
+| [Download Ollie Child Theme Zip](https://github.com/OllieWP/ollie/releases/latest/download/ollie-child.zip)  | Download the Ollie child theme zip for customizations  |
 
 Ollie is built for modern WordPress features and requires WordPress 6.0 or later. To get started, [download the theme](https://github.com/OllieWP/ollie/releases/latest/download/ollie.zip) and install it into your WordPress website by going to `Appearance → Themes → Add New`.
-
-I've also included a blueprint of the Ollie demo site that can be imported into [LocalWP](http://localwp.com). This will create a site exactly like you see on the [demo](https://demo.olliewp.com), cutting out all the setup steps. Simply [download the blueprint](https://github.com/OllieWP/ollie/releases/latest/download/ollie-local-blueprint.zip) and drag the zip file onto the LocalWP app to create the site. Use the username `ollie` and password `demo` to log in to the blueprint. 
 
 ## Working with Block Themes
 
@@ -71,7 +71,7 @@ https://user-images.githubusercontent.com/1415737/226260411-f911f8aa-30ae-48c1-9
 
 A template part is a part of your site that appears across most or all pages. The most common template parts are for the header, footer, and sidebar of a website. Template parts let you easily make global changes to the design or markup of global site elements.
 
-https://user-images.githubusercontent.com/1415737/226489486-9e5fbb46-22cc-48e7-8926-cf1b9959f5f5.mp4
+https://github.com/OllieWP/ollie/assets/1415737/ccffbd01-0176-4c38-adf3-3ba2d5100a72
 
 ### Export Your Site
 
@@ -101,3 +101,4 @@ Ollie was created by [Mike McAlister](https://mikemcalister.com), a code-slingin
 - Check out my [website](https://mikemcalister.com)
 - Find me on [Twitter](https://twitter.com/mikemcalister)
 - Read my writings at [Ollie](https://olliewp.com) and [Liftoff](https://liftoffcourse.com)
+- Watch Ollie video tutorials on [YouTube](https://www.youtube.com/@OllieWP)

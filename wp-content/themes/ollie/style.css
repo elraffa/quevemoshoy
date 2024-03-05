@@ -3,11 +3,11 @@ Theme Name: Ollie
 Theme URI: olliewp.com
 Author: Mike McAlister
 Author URI: mikemcalister.com
-Description: Ollie is a brand new block-based WordPress theme built for the WordPress Site Editor. Now you can easily create beautiful, fully-customizable websites with WordPress's built-in page builder — no additional plugins or coding skills required! Ollie ships with over 50 beautifully-designed patterns, page templates, and style variations so you can design stunning pages quickly with drag and drop instead of code. Ollie is blazing fast, fully customizable via the WordPress UI, fully responsive out of the box, and scores 100% across the board on performance. Start launching blazing-fast websites today with the power of Ollie and the WordPress Site Editor!
-Tags: blog, portfolio, entertainment, grid-layout, one-column, two-columns, three-columns, four-columns, accessibility-ready, block-patterns, block-styles, custom-logo, custom-menu, editor-style, featured-images, full-site-editing, full-width-template, rtl-language-support, style-variations, template-editing, theme-options, translation-ready, wide-blocks
-Tested up to: 6.2
+Description: Launch a blazing-fast, pixel-perfect website with the Ollie WordPress block theme! Ollie features over 50 beautiful pattern designs, 7 full-page pattern layouts, and a fully-customizable design system with Global Styles. Ollie integrates seamlessly with all of the powerful new WordPress editor features, giving you the most lightweight and powerful website builder on the planet — no expensive page builder plugin required! ✶ Full demo: https://demo.olliewp.com ✶
+Tags: blog, portfolio, entertainment, grid-layout, one-column, two-columns, three-columns, four-columns, block-patterns, block-styles, custom-logo, custom-menu, editor-style, featured-images, full-site-editing, full-width-template, rtl-language-support, style-variations, template-editing, theme-options, translation-ready, wide-blocks
+Tested up to: 6.3
 Requires PHP: 7.3
-Version: 0.1.3
+Version: 1.1.0
 License: GNU General Public License v3 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: ollie
@@ -42,13 +42,8 @@ strong {
 	font-weight: var(--wp--custom--font-weight--semi-bold);
 }
 
-blockquote {
-	margin: 0;
-}
-
 ol,
 ul {
-	margin: 0;
 	padding: 0;
 }
 
@@ -65,11 +60,6 @@ div[class*="wp-block-"] figcaption {
 	margin-bottom: 0;
 	margin-top: 20px;
 	text-align: center;
-}
-
-img,
-video {
-	border-radius: 5px;
 }
 
 /* Standardize form styling

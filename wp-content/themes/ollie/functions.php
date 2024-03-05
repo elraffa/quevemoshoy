@@ -15,18 +15,8 @@ namespace Ollie;
  */
 function setup() {
 
-	// Make theme available for translation.
-	load_theme_textdomain( sanitize_title( __NAMESPACE__ ), get_template_directory() . '/languages' );
-
-	// Add support for block styles.
-	add_theme_support( 'wp-block-styles' );
-
 	// Enqueue editor styles and fonts.
-	add_editor_style(
-		array(
-			'./style.css',
-		)
-	);
+	add_editor_style( 'style.css' );
 
 	// Remove core block patterns.
 	remove_theme_support( 'core-block-patterns' );
@@ -39,14 +29,17 @@ add_action( 'after_setup_theme', __NAMESPACE__ . '\setup' );
  */
 function enqueue_style_sheet() {
 	wp_enqueue_style( sanitize_title( __NAMESPACE__ ), get_template_directory_uri() . '/style.css', array(), wp_get_theme()->get( 'Version' ) );
-
-	// Add Dashicon for list block styles.
-	$current_id = get_the_ID();
-	if ( has_block( 'core/list', $current_id ) ) {
-		wp_enqueue_style( 'dashicons' );
-	}
 }
 add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\enqueue_style_sheet' );
+
+
+/**
+ * Add Dashicons for use with block styles.
+ */
+function enqueue_block_dashicons() {
+	wp_enqueue_style( 'dashicons' );
+}
+add_action( 'enqueue_block_assets', __NAMESPACE__ . '\enqueue_block_dashicons' );
 
 
 /**
@@ -80,7 +73,7 @@ function register_block_styles() {
 		'core/column'                    => array(
 			'column-box-shadow' => __( 'Box Shadow', 'ollie' ),
 		),
-		'core/post-excerpt'                    => array(
+		'core/post-excerpt'              => array(
 			'excerpt-truncate-2' => __( 'Truncate 2 Lines', 'ollie' ),
 			'excerpt-truncate-3' => __( 'Truncate 3 Lines', 'ollie' ),
 			'excerpt-truncate-4' => __( 'Truncate 4 Lines', 'ollie' ),
@@ -90,6 +83,7 @@ function register_block_styles() {
 		),
 		'core/separator'                 => array(
 			'separator-dotted' => __( 'Dotted', 'ollie' ),
+			'separator-thin'   => __( 'Thin', 'ollie' ),
 		),
 		'core/image'                     => array(
 			'rounded-full' => __( 'Rounded Full', 'ollie' ),
@@ -154,31 +148,28 @@ add_action( 'init', __NAMESPACE__ . '\enqueue_custom_block_styles' );
 function pattern_categories() {
 
 	$block_pattern_categories = array(
-		'card'           => array(
+		'ollie/card'           => array(
 			'label' => __( 'Cards', 'ollie' ),
 		),
-		'call-to-action' => array(
+		'ollie/call-to-action' => array(
 			'label' => __( 'Call To Action', 'ollie' ),
 		),
-		'columns'        => array(
-			'label' => __( 'Columns', 'ollie' ),
-		),
-		'features'       => array(
+		'ollie/features'       => array(
 			'label' => __( 'Features', 'ollie' ),
 		),
-		'hero'           => array(
+		'ollie/hero'           => array(
 			'label' => __( 'Hero', 'ollie' ),
 		),
-		'pages'          => array(
+		'ollie/pages'          => array(
 			'label' => __( 'Pages', 'ollie' ),
 		),
-		'posts'          => array(
+		'ollie/posts'          => array(
 			'label' => __( 'Posts', 'ollie' ),
 		),
-		'pricing'        => array(
+		'ollie/pricing'        => array(
 			'label' => __( 'Pricing', 'ollie' ),
 		),
-		'testimonial'    => array(
+		'ollie/testimonial'    => array(
 			'label' => __( 'Testimonials', 'ollie' ),
 		),
 	);
@@ -201,3 +192,19 @@ function is_paginated() {
 }
 add_action( 'wp_head', __NAMESPACE__ . '\is_paginated' );
 
+
+/**
+ * Add a Sidebar template part area
+ */
+function template_part_areas( array $areas ) {
+	$areas[] = array(
+		'area'        => 'sidebar',
+		'area_tag'    => 'section',
+		'label'       => __( 'Sidebar', 'ollie' ),
+		'description' => __( 'The Sidebar template defines a page area that can be found on the Page (With Sidebar) template.', 'ollie' ),
+		'icon'        => 'sidebar',
+	);
+
+	return $areas;
+}
+add_filter( 'default_wp_template_part_areas', __NAMESPACE__ . '\template_part_areas' );
