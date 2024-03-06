@@ -10,7 +10,7 @@
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ Edit)
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
@@ -23,16 +23,18 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-function Edit({
-  attributes,
-  setAttributes
-}) {
+function Edit(props) {
+  const {
+    attributes,
+    setAttributes
+  } = props;
   const {
     text,
     alignment,
     backgroundColor,
     textColor
   } = attributes;
+  console.log(attributes, props);
   const onChangeBackgroundColor = newColor => {
     setAttributes({
       backgroundColor: newColor
@@ -85,6 +87,10 @@ function Edit({
     allowedFormats: []
   }));
 }
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ((0,_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_2__.withColors)({
+  backgroundColor: "backgroundColor",
+  textColor: "color"
+})(Edit));
 
 /***/ }),
 

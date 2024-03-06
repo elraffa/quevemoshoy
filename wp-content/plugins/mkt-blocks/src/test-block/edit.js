@@ -6,11 +6,14 @@ import {
 	AlignmentToolbar,
 	InspectorControls,
 	PanelColorSettings,
+	withColors,
 } from "@wordpress/block-editor";
 import "./editor.scss";
 
-export default function Edit({ attributes, setAttributes }) {
+function Edit( props ) {
+	const { attributes, setAttributes } = props;
 	const { text, alignment, backgroundColor, textColor } = attributes;
+	console.log(attributes, props);
 	const onChangeBackgroundColor = (newColor) => {
 		setAttributes({ backgroundColor: newColor });
 	};
@@ -66,3 +69,8 @@ export default function Edit({ attributes, setAttributes }) {
 		</>
 	);
 }
+
+export default withColors({
+	backgroundColor: "backgroundColor",
+	textColor: "color",
+})(Edit);
