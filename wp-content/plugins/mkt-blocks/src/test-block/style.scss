@@ -6,6 +6,37 @@
  */
 
  .wp-block-mkt-blocks-test-block {
+	&.has-shadow {
+		box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+
+		&.shadow-opacity-10 {
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+		}
+
+		&.shadow-opacity-20 {
+			box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+		}
+
+		&.shadow-opacity-30 {
+			box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+		}
+
+		&.shadow-opacity-40 {
+			box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+		}
+
+		&.shadow-opacity-50 {
+			box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+		}
+	}
+
+	&.is-style-squared {
+		border-radius: 0;
+	}
+
+	&.is-style-rounded {
+		border-radius: 10px;
+	}
 
 	&.test-block--align-left {
 		text-align: left;
@@ -17,5 +48,9 @@
 
 	&.test-block--align-right {
 		text-align: right;
+	}
+
+	strong {
+		font-weight: 900;
 	}
 }

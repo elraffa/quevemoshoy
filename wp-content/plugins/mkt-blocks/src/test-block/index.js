@@ -20,6 +20,7 @@ import './style.scss';
 import Edit from './edit';
 import save from './save';
 import metadata from './block.json';
+import { createBlock } from '@wordpress/blocks';
 
 /**
  * Every block starts by registering a new block type definition.
@@ -45,5 +46,62 @@ registerBlockType( metadata.name, {
 		foreground: "c3c3c3"
 	},
 	edit: Edit,
-	save
-} );
+	save,
+	variations: [
+		{
+			name: 'mkt-blocks/gradient-blue',
+			title: 'Text Blue Gradient',
+			isDefault: true,
+			icon: "wordpress",
+			attributes: {
+				gradient: "blue",
+			}
+		},
+	],
+	transforms: {
+		from: [
+			{
+				type: 'block',
+				blocks: [ 'core/paragraph' ],
+				transform: ( { content, align } ) => {
+					return createBlock( 'mkt-blocks/test-block', {
+						text: content,
+						alignment: align,
+					} );
+				},
+			},
+			{
+				type: 'enter',
+				regExp: /textbox/i,
+				transform: () => {
+					return createBlock( 'mkt-blocks/test-block', {
+						text: 'New Text Box',
+						shadow: true,
+						gradient: 'blue',
+					} );
+				},
+			},
+			{
+				type: 'prefix',
+				prefix: 'textbox',
+				transform: ( content ) => {
+					return createBlock( 'mkt-blocks/test-block', {
+						text: content,
+					} );
+				},
+			},
+		],
+		to: [
+			{
+				type: 'block',
+				blocks: [ 'core/paragraph' ],
+				transform: ( { text, alignment } ) => {
+					return createBlock( 'core/paragraph', {
+						content: text,
+						align: alignment,
+					} );
+				},
+			},
+		],
+	},
+});

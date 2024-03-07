@@ -6,9 +6,17 @@
 	"title": "Test Block",
 	"category": "widgets",
 	"description": "Example Test Block scaffolded with Create Block tool.",
-	"example": {},
 	"supports": {
-		"html": false
+		"html": false,
+		"color": {
+			"background": true,
+			"text": true,
+			"gradients": true
+		},
+		"spacing": {
+			"padding": true,
+			"margin": true
+		}
 	},
 	"attributes": {
 		"text": {
@@ -24,7 +32,47 @@
 			"type": "string"
 		},
 		"textColor": {
-			"type": "string"
+			"type": "string",
+			"default": "secondary"
+		},
+		"style": {
+			"type": "object",
+			"default": {
+				"color": {
+					"gradient": "pink",
+					"text": "white"
+				}
+			}
+		},
+		"shadow": {
+			"type": "boolean",
+			"default": false
+		},
+		"shadowOpacity": {
+			"type": "number",
+			"default": 30
+		}
+	},
+	"styles": [
+		{
+			"name": "squared",
+			"label": "Squared",
+			"isDefault": true
+		},
+		{
+			"name": "rounded",
+			"label": "Rounded",
+			"isDefault": false
+		}
+	],
+	"example": {
+		"attributes": {
+			"text": "Hello World",
+			"alignment": "center",
+			"gradient": "pink",
+			"textColor": "#fff",
+			"shadow": true,
+			"shadowOpacity": 50
 		}
 	},
 	"textdomain": "mkt-blocks",
