@@ -1,0 +1,73 @@
+/**
+ * The following styles get applied both on the front of your site
+ * and in the editor.
+ *
+ * Replace them with your own styles or remove the file completely.
+ */
+.wp-block-mkt-blocks-team-members {
+	display: grid;
+	grid-gap: 20px;
+	@for $i from 1 through 6 {
+		&.has-#{$i}-columns {
+			grid-template-columns: repeat(#{$i}, 1fr);
+		}
+	}
+
+	.wp-block-mkt-blocks-team-member {
+		background-color: #b6b6b6;
+		padding: 20px;
+		border-radius: 5px;
+		h4 {
+			color: #222;
+			font-size: 22px;
+			font-weight: 700;
+		}
+		p {
+			color: #666;
+			font-size: 16px;
+			font-weight: 300;
+			margin-bottom: 5px;
+		}
+
+		.wp-block-mkt-blocks-team-member-img {
+			position: relative;
+
+			&.is-loading img {
+				opacity: 0.3;
+			}
+
+			.components-spinner {
+				position: absolute;
+				left: 0;
+				top: 0;
+				right: 0;
+				bottom: 0;
+				margin: auto;
+			}
+		}
+	}
+
+	@media (max-width: 768px) {
+        &.has-1-columns,
+        &.has-2-columns,
+        &.has-3-columns,
+        &.has-4-columns,
+        &.has-5-columns,
+        &.has-6-columns {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 480px) {
+        &.has-1-columns,
+        &.has-2-columns,
+        &.has-3-columns,
+        &.has-4-columns,
+        &.has-5-columns,
+        &.has-6-columns {
+            grid-template-columns: repeat(1, 1fr);
+        }
+    }
+
+}
+

@@ -27,5 +27,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 function mkt_blocks_mkt_blocks_block_init() {
 	register_block_type( __DIR__ . '/build/slider' );
 	register_block_type( __DIR__ . '/build/test-block' );
+	register_block_type( __DIR__ . '/build/team-members' );
+    register_block_type( __DIR__ . '/build/posts' );
 }
 add_action( 'init', 'mkt_blocks_mkt_blocks_block_init' );
+
+function my_plugin_block_categories( $categories, $post ) {
+    return array_merge(
+        $categories,
+        array(
+            array(
+                'slug' => 'mkt-blocks',
+                'title' => __( 'MKT Blocks', 'mkt-blocks' ),
+                'icon'  => 'wordpress',
+            ),
+        )
+    );
+}
+add_filter( 'block_categories_all', 'my_plugin_block_categories', 10, 2 );

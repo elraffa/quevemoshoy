@@ -20,6 +20,7 @@
 		"postcss-preset-env": "^9.4.0"
 	},
 	"dependencies": {
+		"@wordpress/blob": "^3.53.0",
 		"@wordpress/components": "^27.0.0",
 		"classnames": "^2.5.1",
 		"swiper": "^11.0.6"

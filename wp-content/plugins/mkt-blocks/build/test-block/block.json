@@ -4,7 +4,7 @@
   "name": "mkt-blocks/test-block",
   "version": "0.1.0",
   "title": "Test Block",
-  "category": "widgets",
+  "category": "mkt-blocks",
   "description": "Example Test Block scaffolded with Create Block tool.",
   "supports": {
     "html": false,

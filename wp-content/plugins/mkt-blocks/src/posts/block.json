@@ -1,0 +1,44 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "mkt-blocks/posts",
+	"version": "0.1.0",
+	"title": "Posts",
+	"category": "mkt-blocks",
+	"description": "Display your Posts.",
+	"textdomain": "mkt-blocks",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js",
+	"attributes": {
+        "text": {
+            "type": "string",
+            "source": "html",
+            "selector": "h4"
+        },
+        "alignment": {
+            "type": "string",
+            "default": "none"
+        },
+        "style": {
+            "type": "string",
+            "default": "default"
+        },
+        "shadow": {
+            "type": "boolean",
+            "default": false
+        },
+        "shadowOpacity": {
+            "type": "number",
+            "default": 10
+        },
+        "posts": {
+            "type": "array",
+            "default": []
+        }
+    },
+	"supports": {
+		"postTypes": ["post", "page"]
+	}
+}

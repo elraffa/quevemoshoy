@@ -47,17 +47,6 @@ registerBlockType( metadata.name, {
 	},
 	edit: Edit,
 	save,
-	variations: [
-		{
-			name: 'mkt-blocks/gradient-blue',
-			title: 'Text Blue Gradient',
-			isDefault: true,
-			icon: "wordpress",
-			attributes: {
-				gradient: "blue",
-			}
-		},
-	],
 	transforms: {
 		from: [
 			{

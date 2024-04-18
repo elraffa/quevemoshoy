@@ -1,0 +1,15 @@
+.wp-block-mkt-blocks-team-members {
+	display: block;
+	@for $i from 1 through 6 {
+		&.has-#{$i}-columns {
+			> .block-editor-inner-blocks > .block-editor-block-list__layout {
+				display: grid;
+				grid-gap: 20px;
+
+				grid-template-columns: repeat(#{$i}, 1fr);
+			}
+		}
+	}
+}
+
+
